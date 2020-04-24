@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 bootloader = "0.8.0"
+volatile = "0.2.6"
