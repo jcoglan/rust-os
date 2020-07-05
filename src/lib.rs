@@ -5,6 +5,7 @@
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
+pub mod gdt;
 pub mod interrupts;
 pub mod serial;
 pub mod vga_buffer;
@@ -12,6 +13,7 @@ pub mod vga_buffer;
 use core::panic::PanicInfo;
 
 pub fn init() {
+    gdt::init();
     interrupts::init_idt();
 }
 
