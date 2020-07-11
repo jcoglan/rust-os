@@ -1,8 +1,9 @@
 pub mod bump;
+pub mod linked_list;
 
 use alloc::alloc::{GlobalAlloc, Layout};
-use bump::BumpAllocator;
 use core::ptr::null_mut;
+use linked_list::LinkedListAllocator;
 
 use x86_64::{
     structures::paging::{
@@ -13,7 +14,7 @@ use x86_64::{
 };
 
 #[global_allocator]
-static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
+static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
 
 pub struct Locked<T> {
     inner: spin::Mutex<T>,
