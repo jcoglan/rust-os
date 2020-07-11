@@ -1,6 +1,8 @@
+pub mod bump;
+
 use alloc::alloc::{GlobalAlloc, Layout};
+use bump::BumpAllocator;
 use core::ptr::null_mut;
-use linked_list_allocator::LockedHeap;
 
 use x86_64::{
     structures::paging::{
@@ -11,7 +13,45 @@ use x86_64::{
 };
 
 #[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
+static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
+
+pub struct Locked<T> {
+    inner: spin::Mutex<T>,
+}
+
+impl<T> Locked<T> {
+    pub const fn new(inner: T) -> Self {
+        Locked {
+            inner: spin::Mutex::new(inner),
+        }
+    }
+
+    pub fn lock(&self) -> spin::MutexGuard<T> {
+        self.inner.lock()
+    }
+}
+
+fn align_up(addr: usize, align: usize) -> usize {
+    let remainder = addr % align;
+
+    if remainder == 0 {
+        addr
+    } else {
+        addr - remainder + align
+    }
+}
+
+// Requires that `align` is a power of 2. Then if e.g. `align` is 4K, then:
+//
+//      align           = 0b0001000000000000
+//      align - 1       = 0b0000111111111111
+//      !(align - 1)    = 0b1111000000000000
+//
+// So the `&` drops low bits from the `addr` so it becomes a multiple of `align`
+//
+fn _align_up(addr: usize, align: usize) -> usize {
+    (addr + align - 1) & !(align - 1)
+}
 
 pub const HEAP_START: usize = 0x_4444_4444_0000;
 pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
